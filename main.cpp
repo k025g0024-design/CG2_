@@ -1,7 +1,17 @@
 #include<windows.h>
 #include<cstdint>
-#include<string>
+#include<string>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 #include<format>
+#include <filesystem>
+//ファイルの読み書きするライブラリ
+#include <fstream>
+//時間を扱うライブラリ
+#include<chrono>
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include<cassert>
+#pragma comment(lib,"d3d12.lib")
+#pragma comment(lib,"dxgi.lib")
 
 std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
@@ -30,16 +40,26 @@ std::string ConvertString(const std::wstring& str) {
 	WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), result.data(), sizeNeeded, NULL, NULL);
 	return result;
 }
-
+////ロンドンの現在時刻
+//std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+//std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
+//nowSeconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
+//std::chrono::zoned_time localTime{ std::chrono::current_zone(),nowSeconds };
+//std::string dateString=std::format
+//
 void Log(const std::string& message)
 {
 	OutputDebugStringA(message.c_str());
+
+	//ログのディレクトリを用意
+	std::filesystem::create_directory("logs");
+
 }
 
 
 
 //ウィンドウプローシージャ
-LRESULT CALLBACK Windowproc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+LRESULT CALLBACK Windowproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	//メッセージの種類によって処理を分ける
 	switch (msg)
@@ -57,7 +77,7 @@ LRESULT CALLBACK Windowproc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 }
 
 //windowsアプリでエントリーポイント(main関数)
-int WINAPI WinMain(_In_ HINSTANCE,_In_opt_ HINSTANCE,_In_ LPSTR,_In_ int )
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
 	WNDCLASS wc{};
 
@@ -77,7 +97,7 @@ int WINAPI WinMain(_In_ HINSTANCE,_In_opt_ HINSTANCE,_In_ LPSTR,_In_ int )
 
 	RECT wrc = { 0,0,window_width ,window_height };
 
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW,false);
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
 	HWND hwnd = CreateWindow
 	(
@@ -98,8 +118,52 @@ int WINAPI WinMain(_In_ HINSTANCE,_In_opt_ HINSTANCE,_In_ LPSTR,_In_ int )
 
 	//ウィンドウの×ボタンが押されるまでループ
 	ShowWindow(hwnd, SW_SHOW);
+
+	IDXGIFactory7* dxgiFactory = nullptr;
+	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	assert(SUCCEEDED(hr));
+
+	IDXGIAdapter4* useAdapter = nullptr;
+	for (UINT i = 0;dxgiFactory->EnumAdapterByGpuPreference(i,
+		DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&useAdapter)) !=
+		DXGI_ERROR_NOT_FOUND;++i)
+	{
+		DXGI_ADAPTER_DESC3 adapterDesc{};
+		hr = useAdapter->GetDesc3(&adapterDesc);
+		assert(SUCCEEDED(hr));
+		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE))
+		{
+			Log(ConvertString(std::format(L"Use Adapater:{}\n", adapterDesc.Description)));
+			break;
+		}
+		useAdapter = nullptr;
+	}
+	assert(useAdapter != nullptr);
+
+	ID3D12Device* device = nullptr;
+	D3D_FEATURE_LEVEL featureLevels[] =
+	{
+D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
+	};
+
+	const char* featureLevelsStrings[] = { "12.2","12.1","12.0" };
+	for (size_t i = 0;i < _countof(featureLevels);++i)
+	{
+		hr = D3D12CreateDevice(useAdapter, featureLevels[i], IID_PPV_ARGS(&device));
+		if (SUCCEEDED(hr)) 
+		{
+			Log(std::format("FeatureLevel:{}\n", featureLevelsStrings[i]));
+			break;
+
+		}
+
+	}
+	assert(device != nullptr);
+	Log("Complete create D3D12Device!!!\n");
+
+
 	MSG msg{};
-	while (msg.message !=WM_QUIT)
+	while (msg.message != WM_QUIT)
 	{
 
 
@@ -116,7 +180,7 @@ int WINAPI WinMain(_In_ HINSTANCE,_In_opt_ HINSTANCE,_In_ LPSTR,_In_ int )
 	}
 	//出力ウィンドウへの文字出力
 	OutputDebugStringA("Hello,DirectX!\n");
-	
+
 
 
 	return 0;
