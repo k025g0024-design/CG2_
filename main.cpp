@@ -55,7 +55,10 @@ void Log(const std::string& message)
 	std::filesystem::create_directory("logs");
 
 }
-
+void Log(const std::wstring& message)
+{
+	Log(ConvertString(message));
+ }
 
 
 //ウィンドウプローシージャ
@@ -133,7 +136,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		assert(SUCCEEDED(hr));
 		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE))
 		{
-			Log(ConvertString(std::format(L"Use Adapater:{}\n", adapterDesc.Description)));
+			Log(std::format(L"Use Adapater:{}\n", adapterDesc.Description));
 			break;
 		}
 		useAdapter = nullptr;
