@@ -125,14 +125,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	/*ウィンドウの×ボタンが押されるまでループ*/
 	ShowWindow(hwnd, SW_SHOW);
 
-#ifdef _DEBUG
-	ID3D12Debug* debugController = nullptr;
-	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-	{
-		debugController->EnableDebugLayer();
-		debugController->Release();
-	}
-#endif 
+ 
+
 	IDXGIFactory7* dxgiFactory = nullptr;
 	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
 	assert(SUCCEEDED(hr));
@@ -174,6 +168,38 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	}
 	assert(device != nullptr);
 	Log("Complete create D3D12Device!!!\n");
+
+#ifdef _DEBUG
+	ID3D12InfoQueue* infoQueue = nullptr;
+	if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&infoQueue))))
+	{
+		//やばいエラーじ、に止まる
+		infoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION);
+		//エラーじ、に止まる
+		infoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR);
+		//警告時に止まる
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+		//解放
+		infoQueue->Release();
+
+		//制御するメッセージのID
+		D3D12_MESSAGE_ID denyIds[] =
+		{
+		 D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE
+
+		};
+		//制御するレベル
+		D3D12_MESSAGE_SEVERITY severities[] = { D3D12_MESSAGE_SEVERITY_INFO };
+		D3D12_INFO_QUEUE_FILTER filter{};
+		filter.DenyList.NumIDs = _countof(denyIds);
+		filter.DenyList.pIDList = denyIds;
+		filter.DenyList.NumSeverities = _countof(severities);
+		filter.DenyList.pSeverityList = severities;
+		//指定したメッセの表示を抑制する
+		infoQueue->PushStorageFilter(&filter);
+	}
+#endif
+
 
 	ID3D12CommandQueue* commandQueue = nullptr;
 	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
