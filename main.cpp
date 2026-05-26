@@ -185,9 +185,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&infoQueue))))
 	{
 		//やばいエラーじ、に止まる
-		infoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION);
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION,true);
 		//エラーじ、に止まる
-		infoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR);
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,true);
 		//警告時に止まる
 		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 		//解放
