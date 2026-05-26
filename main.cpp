@@ -12,7 +12,8 @@
 #include<cassert>
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
-
+#include <dxgidebug.h>
+#pragma comment (lib,"dxguid.lib")
 
 
 std::wstring ConvertString(const std::string& str) {
@@ -307,9 +308,35 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	}
 
+	//hr = device->CreateCommandQueue(&commandQueue, IID_PPV_ARGS(&commandQueue));
 
+//リソースチェック
+	IDXGIDebug1* debug;
+	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug))))
+	{
+		debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+		debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
+		debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
 
+	}
 
+	infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+	CloseHandle(fenceEvent);
+	fence->Release();
+	rtvDescriptoHeap->Release();
+	swapChaiResources[0]->Release();
+	swapChaiResources[1]->Release();
+	swapChain->Release();
+	commandList->Release();
+	commandAllocator->Release();
+	commandQueue->Release();
+	device->Release();
+	useAdapter->Release();
+	dxgiFactory->Release();
+#ifdef DEBUG
+	debugController->Release();
+#endif // DEBUG
+	CloseHandle(hwnd);
 
 
 	MSG msg{};
