@@ -4,7 +4,6 @@
   </Configurations>
   <Folder Name="/ソリューション項目/">
     <File Path=".editorconfig" />
-    <File Path="object3d.hlsl" />
   </Folder>
   <Project Path="CG2.vcxproj" Id="19c6c9f4-1728-4a2a-be72-3f21d0926471" />
 </Solution>

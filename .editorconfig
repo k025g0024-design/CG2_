@@ -1,4 +1,4 @@
-[*.{cpp,h}]
+[*.{cpp,h,hlsl,hlsl}]
 charset = utf-8
 
 #スペルミスをエラーとして扱う
