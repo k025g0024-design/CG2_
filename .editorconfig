@@ -1,4 +1,9 @@
 [*.{cpp,h,hlsl,hlsl}]
+
+[exteranls/**]
+
+generated_code=true
+
 charset = utf-8
 
 #スペルミスをエラーとして扱う
@@ -15,3 +20,5 @@ spelling_use_default_exclusion_dictionary=true
 
 #自分の除外辞書を指定する
 spelling_exclusion_path=./exclusion.dic
+
+
