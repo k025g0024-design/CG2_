@@ -16,3 +16,29 @@ PixelShaderOutput main()
     output.color = gMaterial.color;
     return output;
 }
+
+struct TransformatioMatrix
+{
+    float32_t4x4 WVP;
+};
+
+ConstantBuffer<TransformatioMatrix> gTransformationMatrix : register(b0);
+
+
+struct VertexShaderOutput
+{
+    float32_t4 position : SV_Position;
+};
+    
+struct VertexShaderInput
+{
+    float32_t4 position : Position0;
+    
+};
+VertexShaderOutput main(VertexShaderIntput input)
+{
+    VertexShaderOutput output;
+    output.position = nul(input.position, gTransformationMatrix.WVP);
+
+    return output;
+}
