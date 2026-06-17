@@ -862,6 +862,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	CloseHandle(fenceEvent);
 	fence->Release();
+	textureResource->Release();
 	rtvDescriptorHeap->Release();
 	srvDescriptorHeap->Release();
 	swapChaiResources[0]->Release();
@@ -887,12 +888,16 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexShaderBlob->Release();
 
 	materialResource->Release();
+	wvpResource->Release();
+	dxcUtils->Release();
+	dxcCompiler->Release();
 
 #ifdef  USE_IMGUI
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 #endif
+	CoUninitialize();
 
 #ifdef _DEBUG
 	debugController->Release();
@@ -909,6 +914,5 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	}
 	return 0;
 
-	CoUninitialize();
 }
 
