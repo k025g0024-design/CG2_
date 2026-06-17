@@ -1,44 +1,27 @@
+#include "Object3d.hlsli"
 struct Material
 {
     float32_t4 color;
 };
 
 ConstantBuffer<Material> gMaterial : register(b0);
-    
+Texture2D<float32_t4> gTexture : register(t0);
+SamplerState gSampler : register(s0);
+
 struct PixelShaderOutput
 {
     float32_t4 color : SV_TARGET0;
+    
+    
 };
 
-PixelShaderOutput main()
+PixelShaderOutput main(VertexShaderOutput input)
 {
     PixelShaderOutput output;
     output.color = gMaterial.color;
-    return output;
-}
+    float32_t4 textureColor = gTexture.Sample(gSampler, input.texcoord);
 
-struct TransformatioMatrix
-{
-    float32_t4x4 WVP;
-};
-
-ConstantBuffer<TransformatioMatrix> gTransformationMatrix : register(b0);
-
-
-struct VertexShaderOutput
-{
-    float32_t4 position : SV_Position;
-};
+    output.color = gMaterial.color * textureColor;
     
-struct VertexShaderInput
-{
-    float32_t4 position : Position0;
-    
-};
-VertexShaderOutput main(VertexShaderIntput input)
-{
-    VertexShaderOutput output;
-    output.position = nul(input.position, gTransformationMatrix.WVP);
-
     return output;
 }
