@@ -515,6 +515,8 @@ struct VertexData
 	Vector2 texcoord;
 };
 
+uint32_t lonIndex;
+uint32_t latIndex;
 
 ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t width, int32_t height) {
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -941,8 +943,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	*materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
 
 	//テクスチャ座標の計算
-	u = float(lonIndex) / float(kSubdivision);
-	v = 1.0f - float(latIndex) / float(kSubdivision);
+	float u = float(lonIndex) / float(kSubdivision);
+	float v = 1.0f - float(latIndex) / float(kSubdivision);
 	uint32_t starIndex = (latIndex * kSubdivision + lonIndex) * 6;
 
 	//球体の頂点データ生成ロジック
@@ -956,12 +958,41 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 		{
 			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
 			float lon = lonIndex * kLonEvery;
-
+			//a
 			vertexData[start].position.x = cos(lat) * cos(lon);
 			vertexData[start].position.y = sin(lat);
-			vertexData[start].position.z = cos(lat) * cos(lon);
+			vertexData[start].position.z = cos(lat) * sin(lon);
 			vertexData[start].position.w = 1.0f;
-			vertexData[start].texcoord. = ;
+
+			vertexData[start].texcoord.x = u;
+			vertexData[start].texcoord.y = v;
+
+			//残り5頂点も順番に計算していく
+			//b
+			vertexData[start+1].position.x = cos(lat+kLatEvery) * cos(lon);
+			vertexData[start + 1].position.y = sin(lat+ kLatEvery);
+			vertexData[start + 1].position.z = cos(lat + kLatEvery) * sin(lon);
+			vertexData[start + 1].position.w = 1.0f;
+
+			vertexData[start + 1].texcoord.x = u;
+			vertexData[start + 1].texcoord.y = v+1.0f;
+			//c
+			vertexData[start + 2].position.x = cos(lat) * cos(lon+kLonEvery);
+			vertexData[start + 2].position.y = sin(lat);
+			vertexData[start + 2].position.z = cos(lat) * sin(lon+kLonEvery);
+			vertexData[start + 2].position.w = 1.0f;
+
+			vertexData[start + 2].texcoord.x = u+1.0f;
+			vertexData[start + 2].texcoord.y = v;
+
+			//d
+			vertexData[start + 3].position.x = cos(lat+kLatEvery) * cos(lon+kLonEvery);
+			vertexData[start + 3].position.y = sin(lat + kLatEvery);
+			vertexData[start + 3].position.z = cos(lat + kLatEvery) * sin(lon);
+			vertexData[start + 3].position.w = 1.0f;
+
+			vertexData[start + 3].texcoord.x = u + 1.0f;
+			vertexData[start + 3].texcoord.y = v + 1.0f;
 
 		}
 
@@ -1017,8 +1048,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(srvDescriptorHeap,desriptorSizeSRV,2);
-	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(srvDescriptorHeap, desriptorSizeSRV, 2);
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 	textureSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	textureSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1121,6 +1152,11 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			*materialData = color;
 
 #ifdef  USE_IMGUI
+
+			ImGui::ShowDemoWindow();
+			ImGui::ColorEdit4("color", &materialData->x);
+
+
 			ImGui::Render();
 #endif
 			//Transitionの設定
