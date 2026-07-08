@@ -58,8 +58,6 @@ std::string ConvertString(const std::wstring& str) {
 }
 
 
-
-
 ////ロンドンの現在時刻
 //std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 //std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
@@ -303,7 +301,7 @@ void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 	}
 }
 
-
+/*関数*/
 
 
 struct Matrix4x4
@@ -514,10 +512,40 @@ struct VertexData
 	Vector4 position;
 
 	Vector2 texcoord;
+
+	Vector3 normal;
 };
+
+struct Material
+{
+
+	Vector4 color;
+	int32_t enableLighting;
+};
+
+//materialDataSprite->enableLighting = false;
+
+
+struct TransformationMatrix
+{
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+};
+
+
+struct DirectionalLight
+{
+	Vector4 color;
+	Vector3 direction;
+	float intensity;
+};
+
 
 uint32_t lonIndex;
 uint32_t latIndex;
+
+bool useMonsterBall = true;
+
 
 ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t width, int32_t height) {
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -551,7 +579,6 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	return resource;
 }
 
-bool useMonsterBall = true;
 
 
 //windowsアプリでエントリーポイント(main関数)
@@ -777,7 +804,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -790,6 +817,10 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].Descriptor.ShaderRegister = 1;
 
 	descriptionRootSignature.pParameters = rootParameters;
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
@@ -834,6 +865,11 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	inputElementDescs[1].SemanticIndex = 0;
 	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElementDescs[2].SemanticName = "NORMAL";
+	inputElementDescs[2].SemanticIndex = 0;
+	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -983,6 +1019,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	}
 
 
+
+
 	//ビューポート
 	D3D12_VIEWPORT viewport{};
 	viewport.Width = kClientWidth;
@@ -1091,12 +1129,42 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexDataSprite[5].position = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 
+
+
 	ID3D12Resource* transformtionMatrixResourceSprite = CreateBufferResource(device, sizeof(Matrix4x4));
 	Matrix4x4* transformtionMatrixDataSprite = nullptr;
 	transformtionMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformtionMatrixDataSprite));
 	*transformtionMatrixDataSprite = MakeIndentity4x4();
 
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	//Sprite用のマテリアルソースを作る
+	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
+	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f};
+	vertexDataSprite[1].normal = { 0.0f,0.0f,-1.0f };
+	vertexDataSprite[2].normal = { 0.0f,0.0f,-1.0f };
+	vertexDataSprite[3].normal = { 0.0f,0.0f,-1.0f };
+	vertexDataSprite[4].normal = { 0.0f,0.0f,-1.0f };
+	vertexDataSprite[5].normal = { 0.0f,0.0f,-1.0f };
+
+
+	ID3D12Resource* materialSprite = CreateBufferResource(device, sizeof(Vector4));
+	//変数の型を「Material*」にする
+	Material* materialDataSprite = nullptr;
+
+	// Mapの reinterpret_cast も &materialDataSprite（Material**型）を渡す
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+
+	// これで正しく Material 構造体のメンバーにアクセスできるようになり、
+	// color (Vector4型) に対する Vector4 の代入も正常に成功するようになります。
+	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialDataSprite->enableLighting = false;
+
+	DirectionalLight* directionalLightData = nullptr;
+
+
+	directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
+	directionalLightData->direction = { 0.0f,-1.0f,0.0f };
+	directionalLightData->intensity = 1.0f;
 
 	MSG msg{};
 	while (msg.message != WM_QUIT)
@@ -1187,6 +1255,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			commandList->DrawInstanced(6, 1, 0, 0);
 
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 
 #ifdef  USE_IMGUI
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
