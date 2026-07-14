@@ -567,8 +567,8 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-	D3D12_HEAP_PROPERTIES heapPproperties{};
-	heapPproperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 
 	D3D12_CLEAR_VALUE depthClearValue{};
 	depthClearValue.DepthStencil.Depth = 1.0f;
@@ -576,7 +576,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 
 	ID3D12Resource* resource = nullptr;
 	HRESULT hr = device->CreateCommittedResource(
-		&heapPproperties,
+		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -1001,7 +1001,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	//テクスチャ座標の計算
 	//float u = float(lonIndex) / float(kSubdivision);
 	//float v = 1.0f - float(latIndex) / float(kSubdivision);
-	uint32_t starIndex = (latIndex * kSubdivision + lonIndex) * 6;
+	//uint32_t starIndex = (latIndex * kSubdivision + lonIndex) * 6;
 
 	//球体の頂点データ生成ロジック
 	const float kLonEvery = pi * 2.0f / float(kSubdivision);
