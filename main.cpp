@@ -259,10 +259,11 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 	);
 	assert(SUCCEEDED(hr));
 	return resource;
-
-
-
 }
+
+
+
+
 
 D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
 {
@@ -279,8 +280,6 @@ D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(ID3D12DescriptorHeap* descrip
 
 	return handleGPU;
 }
-
-
 
 void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImage)
 {
@@ -500,6 +499,16 @@ Matrix4x4 MakeIndentity4x4()
 	return result;
 }
 
+float Dot(const Vector3& v1, const Vector3& v2)
+{
+	Vector3 result{};
+	result.x = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+
+	return result.x;
+}
+
+
+
 struct  Transform
 {
 	Vector3 scale;
@@ -580,6 +589,26 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 }
 
 
+
+float  Length(const Vector3& v)
+{
+	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+
+}
+Vector3 Normalize(const Vector3& v)
+{
+	float len = Length(v);
+
+	// 0除算防止
+	if (len == 0.0f)
+	{
+		return { 0.0f, 0.0f, 0.0f };
+	}
+
+	return { v.x / len, v.y / len, v.z / len };
+
+
+}
 
 //windowsアプリでエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
@@ -768,7 +797,17 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	rtvHandles[1].ptr = rtvHandles[0].ptr + device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	device->CreateRenderTargetView(swapChaiResources[1], &rtvDesc, rtvHandles[1]);
 
+	/*--------  06-00  --------*/
+	//ID3D12Resource* indexResourceSprite = CreateBufferResource(device, sizeof(uint32_t) * 6);
+	//D3D12_INDEX_BUFFER_VIEW indexBufferViewSprite{};
+	//indexBufferViewSprite.BufferLocation = indexResourceSprite->GetGPUVirtualAddress();
+	//indexBufferViewSprite.SizeInBytes = sizeof(uint32_t) * 6;
+	//indexBufferViewSprite.Format = DXGI_FORMAT_R32_UINT;
 
+	//uint32_t* indexDataSprite = nullptr;
+	//indexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSprite));
+	//indexDataSprite[0] = 0; indexDataSprite[1] = 1; indexDataSprite[2] = 2;
+	//indexDataSprite[3] = 1; indexDataSprite[4] = 3; indexDataSprite[5] = 2;
 
 
 	//初期値でFence作成
@@ -940,7 +979,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	Material* materialData = nullptr;
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	*materialData = Material{ 1.0f, 0.0f, 0.0f, 1.0f };
-	materialData->enableLighting = false;
+	materialData->enableLighting = true;
 
 	const float pi = std::numbers::pi_v<float>;
 	const uint32_t kSubdivision = 16;
@@ -984,6 +1023,11 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			vertexData[start].texcoord.x = float(lonIndex) / float(kSubdivision);
 			vertexData[start].texcoord.y = 1.0f - float(latIndex) / float(kSubdivision);
 
+			vertexData[start].normal.x = vertexData[start].position.x;
+			vertexData[start].normal.y = vertexData[start].position.y;
+			vertexData[start].normal.z = vertexData[start].position.z;
+
+
 			//残り5頂点も順番に計算していく
 			//b
 			vertexData[start + 1].position.x = cos(lat + kLatEvery) * cos(lon);
@@ -1002,7 +1046,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			vertexData[start + 2].texcoord.x = float(lonIndex + 1) / float(kSubdivision);
 			vertexData[start + 2].texcoord.y = 1.0f - float(latIndex) / float(kSubdivision);
 
-			vertexData[start + 3] = vertexData[start + 1];
+
 			//d
 			vertexData[start + 4].position.x = cos(lat + kLatEvery) * cos(lon + kLonEvery);
 			vertexData[start + 4].position.y = sin(lat + kLatEvery);
@@ -1012,14 +1056,38 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			vertexData[start + 4].texcoord.x = float(lonIndex + 1) / float(kSubdivision);
 			vertexData[start + 4].texcoord.y = 1.0f - float(latIndex + 1) / float(kSubdivision);
 
+			vertexData[start + 3] = vertexData[start + 1];
 			vertexData[start + 5] = vertexData[start + 2];
+
+
+
+			vertexData[start + 1].normal.x = vertexData[start + 1].position.x;
+			vertexData[start + 1].normal.y = vertexData[start + 1].position.y;
+			vertexData[start + 1].normal.z = vertexData[start + 1].position.z;
+			
+
+
+			vertexData[start + 2].normal.x = vertexData[start + 2].position.x;
+			vertexData[start + 2].normal.y = vertexData[start + 2].position.y;
+			vertexData[start + 2].normal.z = vertexData[start + 2].position.z;
+
+			vertexData[start + 3].normal.x = vertexData[start + 3].position.x;
+			vertexData[start + 3].normal.y = vertexData[start + 3].position.y;
+			vertexData[start + 3].normal.z = vertexData[start + 3].position.z;
+
+			vertexData[start + 4].normal.x = vertexData[start + 4].position.x;
+			vertexData[start + 4].normal.y = vertexData[start + 4].position.y;
+			vertexData[start + 4].normal.z = vertexData[start + 4].position.z;
+
+			vertexData[start + 5].normal.x = vertexData[start + 5].position.x;
+			vertexData[start + 5].normal.y = vertexData[start + 5].position.y;
+			vertexData[start + 5].normal.z = vertexData[start + 5].position.z;
+
+
 
 		}
 
 	}
-
-
-
 
 	//ビューポート
 	D3D12_VIEWPORT viewport{};
@@ -1070,7 +1138,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap,desriptorSizeSRV,2);
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 
 	textureSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1129,8 +1197,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexDataSprite[5].position = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 
-
-
 	ID3D12Resource* transformtionMatrixResourceSprite = CreateBufferResource(device, sizeof(TransformationMatrix));
 	TransformationMatrix* transformtionMatrixDataSprite = nullptr;
 	transformtionMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformtionMatrixDataSprite));
@@ -1139,7 +1205,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 	//Sprite用のマテリアルソースを作る
-	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f};
+	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[1].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[2].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[3].normal = { 0.0f,0.0f,-1.0f };
@@ -1188,6 +1254,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
 			ImGui::DragFloat3("translate", &transform.translate.x, 0.1f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::DragFloat3("direction", &directionalLightData->direction.x, 0.1f);
 
 #endif
 			transform.rotate.y += 0.03f;
@@ -1203,10 +1270,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			Matrix4x4 camerMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(camerMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
-			wvpData->WVP = worldMatrix;
 			wvpData->World = worldMatrix;
 
-			Matrix4x4 worldViewProjectionmatrix= Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			Matrix4x4 worldViewProjectionmatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 			wvpData->WVP = worldViewProjectionmatrix;
 
 			materialData->color = color;
@@ -1250,6 +1316,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
 			commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
 			//commandList->DrawInstanced(6, 1, 0, 0);
@@ -1258,9 +1325,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 			commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
 
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 			commandList->DrawInstanced(6, 1, 0, 0);
 
-			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 
 #ifdef  USE_IMGUI
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
