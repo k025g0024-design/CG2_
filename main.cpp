@@ -302,7 +302,12 @@ void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 
 /*関数*/
 
+struct Matrix3x3
+{
+	float m[3][3];
 
+
+};
 struct Matrix4x4
 {
 	float m[4][4];
@@ -325,6 +330,13 @@ struct Vector2
 	float x;
 	float y;
 
+};
+struct Material
+{
+	Vector4 color;
+	int32_t enableLighting;
+	float padding[3];
+	Matrix3x3 uvTransform;
 };
 
 
@@ -452,6 +464,55 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2)
 	return result;
 };
 
+Matrix4x4 MakeRotateZMatrix(float radian)
+{
+    Matrix4x4 result{};
+
+    result.m[0][0] = cosf(radian);
+    result.m[0][1] = sinf(radian);
+    result.m[0][2] = 0.0f;
+    result.m[0][3] = 0.0f;
+
+    result.m[1][0] = -sinf(radian);
+    result.m[1][1] = cosf(radian);
+    result.m[1][2] = 0.0f;
+    result.m[1][3] = 0.0f;
+
+    result.m[2][0] = 0.0f;
+    result.m[2][1] = 0.0f;
+    result.m[2][2] = 1.0f;
+    result.m[2][3] = 0.0f;
+
+    result.m[3][0] = 0.0f;
+    result.m[3][1] = 0.0f;
+    result.m[3][2] = 0.0f;
+    result.m[3][3] = 1.0f;
+
+    return result;
+}
+
+Matrix4x4 MakeTranslateMatrix(const Vector3& translate)
+{
+	Matrix4x4 result = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		translate.x, translate.y, translate.z, 1.0f
+	};
+	return result;
+}
+
+Matrix4x4 MakeScaleMatrix(const Vector3& scale)
+{
+	Matrix4x4 result = {
+		scale.x, 0.0f, 0.0f, 0.0f,
+		0.0f, scale.y, 0.0f, 0.0f,
+		0.0f, 0.0f, scale.z, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	return result;
+}
+
 // 1. 透視投影行列 (Perspective)
 Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip)
 {
@@ -525,12 +586,12 @@ struct VertexData
 	Vector3 normal;
 };
 
-struct Material
-{
-
-	Vector4 color;
-	int32_t enableLighting;
-};
+//struct Material
+//{
+//
+//	Vector4 color;
+//	int32_t enableLighting;
+//};
 
 //materialDataSprite->enableLighting = false;
 
@@ -547,6 +608,13 @@ struct DirectionalLight
 	Vector4 color;
 	Vector3 direction;
 	float intensity;
+};
+
+Transform uvTransformSprite
+{
+	{1.0f,1.0f,1.0f},
+	{ 0.0f,0.0f,0.0f },
+	{ 0.0f,0.0f,0.0f },
 };
 
 
@@ -1207,6 +1275,12 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexDataSprite[4].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[5].normal = { 0.0f,0.0f,-1.0f };
 
+	/*--   06-01   ---*/
+	Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+	uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
+
+
 	// GPUに送るマテリアルのデータの作成
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
 	//変数の型を「Material*」にする
@@ -1250,6 +1324,10 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			ImGui::DragFloat3("translate", &transform.translate.x, 0.1f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 			ImGui::DragFloat3("direction", &directionalLightData->direction.x, 0.1f);
+
+			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
 
 #endif
 			transform.rotate.y += 0.03f;
@@ -1310,6 +1388,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
+
+			//commandList->SetGraphicsRootShaderResourceView()
+
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
@@ -1318,6 +1399,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
 			//commandList->DrawInstanced(6, 1, 0, 0);
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0 );
+
+			//commandList->CopyTextureRegion();
 
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
@@ -1387,6 +1470,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexResource->Release();
 	graphicsPipelineState->Release();
 	signatureBlob->Release();
+
+	//uvTransformMatrix->Release();
 
 	if (errorBlob)
 	{
