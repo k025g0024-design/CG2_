@@ -336,7 +336,7 @@ struct Material
 	Vector4 color;
 	int32_t enableLighting;
 	float padding[3];
-	Matrix3x3 uvTransform;
+	Matrix4x4 uvTransform;
 };
 
 
@@ -466,29 +466,29 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2)
 
 Matrix4x4 MakeRotateZMatrix(float radian)
 {
-    Matrix4x4 result{};
+	Matrix4x4 result{};
 
-    result.m[0][0] = cosf(radian);
-    result.m[0][1] = sinf(radian);
-    result.m[0][2] = 0.0f;
-    result.m[0][3] = 0.0f;
+	result.m[0][0] = cosf(radian);
+	result.m[0][1] = sinf(radian);
+	result.m[0][2] = 0.0f;
+	result.m[0][3] = 0.0f;
 
-    result.m[1][0] = -sinf(radian);
-    result.m[1][1] = cosf(radian);
-    result.m[1][2] = 0.0f;
-    result.m[1][3] = 0.0f;
+	result.m[1][0] = -sinf(radian);
+	result.m[1][1] = cosf(radian);
+	result.m[1][2] = 0.0f;
+	result.m[1][3] = 0.0f;
 
-    result.m[2][0] = 0.0f;
-    result.m[2][1] = 0.0f;
-    result.m[2][2] = 1.0f;
-    result.m[2][3] = 0.0f;
+	result.m[2][0] = 0.0f;
+	result.m[2][1] = 0.0f;
+	result.m[2][2] = 1.0f;
+	result.m[2][3] = 0.0f;
 
-    result.m[3][0] = 0.0f;
-    result.m[3][1] = 0.0f;
-    result.m[3][2] = 0.0f;
-    result.m[3][3] = 1.0f;
+	result.m[3][0] = 0.0f;
+	result.m[3][1] = 0.0f;
+	result.m[3][2] = 0.0f;
+	result.m[3][3] = 1.0f;
 
-    return result;
+	return result;
 }
 
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate)
@@ -592,8 +592,6 @@ struct VertexData
 //	Vector4 color;
 //	int32_t enableLighting;
 //};
-
-//materialDataSprite->enableLighting = false;
 
 
 struct TransformationMatrix
@@ -1048,6 +1046,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	*materialData = Material{ 1.0f, 0.0f, 0.0f, 1.0f };
 	materialData->enableLighting = true;
+	materialData->uvTransform = MakeIndentity4x4();
 
 	const float pi = std::numbers::pi_v<float>;
 	const uint32_t kSubdivision = 16;
@@ -1132,7 +1131,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			vertexData[start + 1].normal.x = vertexData[start + 1].position.x;
 			vertexData[start + 1].normal.y = vertexData[start + 1].position.y;
 			vertexData[start + 1].normal.z = vertexData[start + 1].position.z;
-			
+
 
 
 			vertexData[start + 2].normal.x = vertexData[start + 2].position.x;
@@ -1275,12 +1274,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexDataSprite[4].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[5].normal = { 0.0f,0.0f,-1.0f };
 
-	/*--   06-01   ---*/
-	Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
-	uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
-	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
-
-
 	// GPUに送るマテリアルのデータの作成
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
 	//変数の型を「Material*」にする
@@ -1291,7 +1284,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	// これで正しく Material 構造体のメンバーにアクセスできるようになり、
 	// color (Vector4型) に対する Vector4 の代入も正常に成功するようになります。
 	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSprite->enableLighting = false;
+	materialDataSprite->enableLighting = true;
+	materialDataSprite->uvTransform = MakeIndentity4x4();
 
 
 	ID3D12Resource* directionalLightResource = CreateBufferResource(device, sizeof(DirectionalLight));
@@ -1330,6 +1324,12 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
 
 #endif
+			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
+			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
+			materialDataSprite->uvTransform = uvTransformMatrix;
+
 			transform.rotate.y += 0.03f;
 
 			//WVPMatrix
@@ -1388,7 +1388,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
-
+		
 			//commandList->SetGraphicsRootShaderResourceView()
 
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
@@ -1398,7 +1398,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
 			//commandList->DrawInstanced(6, 1, 0, 0);
-			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0 );
+			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			//commandList->CopyTextureRegion();
 
@@ -1462,7 +1462,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	indexResourceSprite->Release();
 	//indexDataSprite->Release();
-	
+
 	device->Release();
 	useAdapter->Release();
 	dxgiFactory->Release();
@@ -1523,4 +1523,3 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	return 0;
 
 }
-
