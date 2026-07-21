@@ -6,6 +6,7 @@
 #include <cmath>
 //ファイルの読み書きするライブラリ
 #include <fstream>
+#include <sstream>
 //時間を扱うライブラリ
 #include<chrono>
 #include <d3d12.h>
@@ -27,6 +28,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 #endif //  USE_IMGUI
 
+#include <vector>
 #include "externals/DirectXTex/DirectXTex.h"
 
 std::wstring ConvertString(const std::string& str) {
@@ -78,8 +80,87 @@ void Log(const std::wstring& message)
 	Log(ConvertString(message));
 }
 
+/*関数*/
+
+struct Matrix3x3
+{
+	float m[3][3];
 
 
+};
+struct Matrix4x4
+{
+	float m[4][4];
+};
+struct Vector4
+{
+	float x;
+	float y;
+	float z;
+	float w;
+};
+struct Vector3
+{
+	float x;
+	float y;
+	float z;
+};
+struct Vector2
+{
+	float x;
+	float y;
+
+};
+struct Material
+{
+	Vector4 color;
+	int32_t enableLighting;
+	float padding[3];
+	Matrix4x4 uvTransform;
+};
+
+struct  Transform
+{
+	Vector3 scale;
+	Vector3 rotate;
+	Vector3 translate;
+};
+
+struct VertexData
+{
+	Vector4 position;
+
+	Vector2 texcoord;
+
+	Vector3 normal;
+};
+
+struct MaterialData
+{
+	std::string textureFilePath;
+};
+
+
+struct TransformationMatrix
+{
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+};
+
+
+struct DirectionalLight
+{
+	Vector4 color;
+	Vector3 direction;
+	float intensity;
+};
+
+Transform uvTransformSprite
+{
+	{1.0f,1.0f,1.0f},
+	{ 0.0f,0.0f,0.0f },
+	{ 0.0f,0.0f,0.0f },
+};
 
 //ウィンドウプローシージャ
 LRESULT CALLBACK Windowproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -300,45 +381,132 @@ void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 	}
 }
 
-/*関数*/
+/*== objを読み込む関数 ==*/
+struct ModelData
+{
+	std::vector<VertexData>vertices;
+	MaterialData material;
+};
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filename)
+{
+	ModelData modelData;
+	std::vector<Vector4>positions;
+	std::vector<Vector3>normals;
+	std::vector<Vector2>texcoords;
+	std::string line;
 
-struct Matrix3x3
-{
-	float m[3][3];
+	std::ifstream file(directoryPath + "/" + filename);
+
+	assert(file.is_open());
+
+	while (std::getline(file, line))
+	{
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier;
+
+		if (identifier == "v")
+		{
+			Vector4 position;
+			s >> position.x >> position.y >> position.z;
+			position.w = 1.0f;
+			positions.push_back(position);
+
+		}
+		else if (identifier == "vt")
+		{
+			Vector2 texcoord;
+			s >> texcoord.x >> texcoord.y;
+			texcoords.push_back(texcoord);
+		}
+		else if (identifier == "vn")
+		{
+			Vector3 normal;
+			s >> normal.x >> normal.y >> normal.z;
+			normals.push_back(normal);
+		}
+
+		else if (identifier == "f")
+		{
+			for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex)
+			{
+				std::string vertexDefinition;
+				s >> vertexDefinition;
+
+				std::istringstream v(vertexDefinition);
+				uint32_t elementIndices[3];
+				for (int32_t element = 0; element < 3; ++element)
+				{
+					std::string index;
+					std::getline(v, index, '/');
+					elementIndices[element] = std::stoi(index);
+
+				}
+				Vector4 position = positions[elementIndices[0] - 1];
+				Vector2 texcoord = texcoords[elementIndices[1] - 1];
+				Vector3 normal = normals[elementIndices[2] - 1];
+				VertexData vertex = { position,texcoord,normal };
+
+				VertexData triangle[3];
+				for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex)
+				{
+					position.x *= -1.0f;
+					normal.x *= -1.0f;
+
+					texcoord.y = 1.0f - texcoord.y;
 
 
-};
-struct Matrix4x4
-{
-	float m[4][4];
-};
-struct Vector4
-{
-	float x;
-	float y;
-	float z;
-	float w;
-};
-struct Vector3
-{
-	float x;
-	float y;
-	float z;
-};
-struct Vector2
-{
-	float x;
-	float y;
+					VertexData vertex{ position ,texcoord ,normal };
+					modelData.vertices.push_back(vertex);
 
-};
-struct Material
-{
-	Vector4 color;
-	int32_t enableLighting;
-	float padding[3];
-	Matrix4x4 uvTransform;
-};
+					triangle[faceVertex] = { position ,texcoord ,normal };
+				}
+				modelData.vertices.push_back(triangle[2]);
+				modelData.vertices.push_back(triangle[1]);
+				modelData.vertices.push_back(triangle[0]);
+			}
 
+		}
+
+
+	}
+	return modelData;
+}
+
+/*== mtlを読み込む関数 ==*/
+MaterialData LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename)
+{
+	MaterialData materialData;
+	ModelData modelData;
+
+	std::string line;
+	std::ifstream file(directoryPath + "/" + filename);
+	assert(file.is_open());
+	while (std::getline(file,line))
+	{
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier;
+
+
+		if (identifier == "map_kd")
+		{
+			std::string textureFilename;
+			s >> textureFilename;
+
+
+			materialData.textureFilePath = directoryPath + "/" + textureFilename;
+		}
+		else if (identifier=="mtllib")
+		{
+			std::string materialFilename;
+			s >> materialFilename;
+
+			modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
+		}
+	}
+	return materialData;
+}
 
 
 //三次元アフィン変換行列
@@ -450,6 +618,7 @@ Matrix4x4 Inverse(const Matrix4x4& m)
 
 	return result;
 }
+
 
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2)
 {
@@ -567,54 +736,6 @@ float Dot(const Vector3& v1, const Vector3& v2)
 
 	return result.x;
 }
-
-
-
-struct  Transform
-{
-	Vector3 scale;
-	Vector3 rotate;
-	Vector3 translate;
-};
-
-struct VertexData
-{
-	Vector4 position;
-
-	Vector2 texcoord;
-
-	Vector3 normal;
-};
-
-//struct Material
-//{
-//
-//	Vector4 color;
-//	int32_t enableLighting;
-//};
-
-
-struct TransformationMatrix
-{
-	Matrix4x4 WVP;
-	Matrix4x4 World;
-};
-
-
-struct DirectionalLight
-{
-	Vector4 color;
-	Vector3 direction;
-	float intensity;
-};
-
-Transform uvTransformSprite
-{
-	{1.0f,1.0f,1.0f},
-	{ 0.0f,0.0f,0.0f },
-	{ 0.0f,0.0f,0.0f },
-};
-
 
 uint32_t lonIndex;
 uint32_t latIndex;
@@ -851,7 +972,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 	wvpData->WVP = MakeIndentity4x4();
 
-
 	//RTVの設定
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -1052,18 +1172,31 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	const uint32_t kSubdivision = 16;
 	const uint32_t kNumSphereVertices = kSubdivision * kSubdivision * 6; // 全頂点数
 
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
-	D3D12_CLEAR_VALUE depthClearValue{};
-	depthClearValue.DepthStencil.Depth = 1.0f;
-	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	ModelData modeData = LoadObjFile("resource", "plane.obj");
 
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * modeData.vertices.size());
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * kNumSphereVertices;
+	vertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * modeData.vertices.size());
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
-
 	VertexData* vertexData = nullptr;
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+	std::memcpy(vertexData, modeData.vertices.data(), sizeof(VertexData) * modeData.vertices.size());
+
+
+	//ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
+
+	//D3D12_CLEAR_VALUE depthClearValue{};
+	//depthClearValue.DepthStencil.Depth = 1.0f;
+	//depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	//D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	//vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+	//vertexBufferView.SizeInBytes = sizeof(VertexData) * kNumSphereVertices;
+	//vertexBufferView.StrideInBytes = sizeof(VertexData);
+
+	//VertexData* vertexData = nullptr;
+	//vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 
 	//テクスチャ座標の計算
 	//float u = float(lonIndex) / float(kSubdivision);
@@ -1175,7 +1308,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	ID3D12Resource* textureResource = CreateTextureResource(device, metadata);
 	UploadTextureData(textureResource, mipImages);
 
-	DirectX::ScratchImage mipImages2 = LoadTexture("resources/monsterBall.png");
+	DirectX::ScratchImage  mipImages2 = LoadTexture(modeData.material.textureFilePath);
+	//DirectX::ScratchImage mipImages2 = LoadTexture("resources/monsterBall.png");
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	ID3D12Resource* textureResource2 = CreateTextureResource(device, metadata2);
 	UploadTextureData(textureResource2, mipImages2);
@@ -1273,6 +1407,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	vertexDataSprite[3].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[4].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[5].normal = { 0.0f,0.0f,-1.0f };
+
 
 	// GPUに送るマテリアルのデータの作成
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
@@ -1388,7 +1523,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
-		
+
 			//commandList->SetGraphicsRootShaderResourceView()
 
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
@@ -1396,7 +1531,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
+			commandList->DrawInstanced(UINT(modeData.vertices.size()), 1, 0, 0);
 			//commandList->DrawInstanced(6, 1, 0, 0);
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
@@ -1483,6 +1618,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	materialResource->Release();
 	wvpResource->Release();
+
 
 	//【追加】もし directionalLightResource を作っているならここで解放する
 	if (directionalLightResource) {
