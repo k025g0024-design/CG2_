@@ -22,6 +22,8 @@
 #pragma comment (lib,"dxguid.lib")
 #include <dxcapi.h>
 #pragma comment(lib,"dxcompiler.lib")
+#include <xaudio2.h>
+#pragma comment(lib,"xaudio2.lib")
 
 #ifdef  USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -157,6 +159,122 @@ struct DirectionalLight
 	Vector3 direction;
 	float intensity;
 };
+
+//音声データの読み込み
+
+struct ChunkHeader
+{
+	char id[4];
+	int32_t size;
+};
+
+struct FormatChunk
+{
+	ChunkHeader chunk;
+	WAVEFORMATEX fmt;
+};
+
+
+
+struct RiffHeader
+{
+	ChunkHeader chunk;
+	char type[4];
+};
+
+struct SoundData
+{
+	//波形フォーマット
+	WAVEFORMATEX wfex;
+	//バッファの先頭アドレス
+	BYTE* pBuffer;
+	//バッファサイズ
+	unsigned int bufferSize;
+
+};
+
+SoundData SoundLoadWave(const char* filename)
+{
+	//1ファイルオープン
+	std::ifstream file;
+	file.open(filename, std::ios_base::binary);
+	assert(file.is_open());
+	//2.wavデータの読み込み
+	RiffHeader riff;
+	file.read((char*)&riff, sizeof(riff));
+
+	if (strncmp(riff.chunk.id, "RIFF", 4) != 0)
+	{
+		assert(0);
+	}
+	if (strncmp(riff.type, "WAVE", 4) != 0)
+	{
+		assert(0);
+	}
+
+	FormatChunk format = {};
+
+	file.read((char*)&format, sizeof(ChunkHeader));
+	if (strncmp(format.chunk.id, "fmt ", 4) != 0)
+	{
+		assert(0);
+	}
+	assert(format.chunk.size <= sizeof(format.fmt));
+	file.read((char*)&format.fmt, format.chunk.size);
+
+	ChunkHeader data;
+	file.read((char*)&data, sizeof(data));
+
+	if (strncmp(data.id, "JUNK", 4) == 0)
+	{
+		file.seekg(data.size, std::ios_base::cur);
+		file.read((char*)&data, sizeof(data));
+	}
+	if (strncmp(data.id, "data", 4) != 0)
+	{
+		assert(0);
+	}
+	char* pBuffer = new char[data.size];
+	file.read(pBuffer, data.size);
+
+	//3ファイルクローズ
+	file.close();
+	//4読み込んだ音声データをreturn
+	SoundData soundData = {};
+	soundData.wfex = format.fmt;
+	soundData.pBuffer = reinterpret_cast<BYTE*>(pBuffer);
+	soundData.bufferSize = data.size;
+
+	return soundData;
+}
+
+//音声データの解放
+void SoundUnload(SoundData* soundData)
+{
+	delete[]soundData->pBuffer;
+
+	soundData->pBuffer = 0;
+	soundData->bufferSize = 0;
+	soundData->wfex = {};
+}
+
+void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData)
+{
+	HRESULT hr;
+
+	IXAudio2SourceVoice* pSourceVoice = nullptr;
+	hr = xAudio2->CreateSourceVoice(&pSourceVoice, &soundData.wfex);
+
+	assert(SUCCEEDED(hr));
+
+	XAUDIO2_BUFFER buf{};
+	buf.pAudioData = soundData.pBuffer;
+	buf.AudioBytes = soundData.bufferSize;
+	buf.Flags = XAUDIO2_END_OF_STREAM;
+
+	hr = pSourceVoice->SubmitSourceBuffer(&buf);
+	hr = pSourceVoice->Start();
+}
 
 Transform uvTransformSprite
 {
@@ -839,7 +957,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
 
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
 	HWND hwnd = CreateWindow
 	(
@@ -857,6 +974,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	);
 
 	D3DResourceLeakChecker leakCheck;
+
+	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
+	IXAudio2MasteringVoice* masterVoice;
 
 	/*ウィンドウの×ボタンが押されるまでループ*/
 	ShowWindow(hwnd, SW_SHOW);
@@ -998,6 +1118,11 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	device->CreateRenderTargetView(swapChaiResources[0].Get(), &rtvDesc, rtvHandles[0]);
 	rtvHandles[1].ptr = rtvHandles[0].ptr + device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	device->CreateRenderTargetView(swapChaiResources[1].Get(), &rtvDesc, rtvHandles[1]);
+
+	//XAudio2エンジンのインスタンスを生成
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
+	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+	hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
 	/*--------  06-00 頂点インデックス --------*/
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexResourceSprite = CreateBufferResource(device.Get(), sizeof(uint32_t) * 6);
@@ -1197,7 +1322,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	VertexData* vertexData = nullptr;
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	std::memcpy(vertexData, modeData.vertices.data(), sizeof(VertexData) * modeData.vertices.size());
-
 
 	//ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
 
@@ -1446,6 +1570,12 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	directionalLightData->direction = { 0.0f,-1.0f,0.0f };
 	directionalLightData->intensity = 1.0f;
 
+	//音声読み込み
+	SoundData soundData1 = SoundLoadWave("Resources/Alarm01.wav");
+		SoundPlayWave(xAudio2.Get(), soundData1);
+
+		
+
 	MSG msg{};
 	while (msg.message != WM_QUIT)
 	{
@@ -1596,6 +1726,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 		}
 	}
+
+	xAudio2.Reset();
+	SoundUnload(&soundData1);
 
 	CloseHandle(fenceEvent);
 
