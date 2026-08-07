@@ -199,13 +199,8 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = 0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { 0.0f,0.0f,speed };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
-
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
-
-		move = Transform(move, rotMat);
+		Matrix4x4 rotMatZ = MakeRotateZMatrix(speed);
+		move = Transform(move, rotMatZ);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
@@ -217,13 +212,11 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = -0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { 0.0f,0.0f,speed };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
 
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
+		Matrix4x4 rotMatZ = MakeRotateZMatrix(speed);
 
-		move = Transform(move, rotMat);
+
+		move = Transform(move, rotMatZ);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
@@ -235,13 +228,11 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = -0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { speed,0.0f,0.0f };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
+		Matrix4x4 rotMatX = MakeRotateXMatrix(speed);
 
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
 
-		move = Transform(move, rotMat);
+
+		move = Transform(move, rotMatX);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
@@ -254,13 +245,11 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = 0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { speed,0.0f,0.0f };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
+		Matrix4x4 rotMatX = MakeRotateXMatrix(speed);
 
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
 
-		move = Transform(move, rotMat);
+
+		move = Transform(move, rotMatX);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
@@ -273,13 +262,10 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = -0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { 0.0f,speed,0.0f };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
+		Matrix4x4 rotMatY = MakeRotateYMatrix(speed);
 
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
 
-		move = Transform(move, rotMat);
+		move = Transform(move, rotMatY);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
@@ -291,13 +277,10 @@ void DebugCamera::Update(BYTE* key)
 		const float speed = 0.1f;//前進の速さ
 		//移動ベクトルを角度分だけ回転
 		Vector3 move = { 0.0f,speed,0.0f };
-		Matrix4x4 rotMatX = MakeRotateXMatrix(move.x);
-		Matrix4x4 rotMatY = MakeRotateYMatrix(move.y);
-		Matrix4x4 rotMatZ = MakeRotateZMatrix(move.z);
+		Matrix4x4 rotMatY = MakeRotateYMatrix(speed);
 
-		Matrix4x4 rotMat = Multiply(Multiply(rotMatX, rotMatY), rotMatZ);
 
-		move = Transform(move, rotMat);
+		move = Transform(move, rotMatY);
 
 		//移動ベクトル文だけ座標を加算する
 		translation_.z += move.z;
