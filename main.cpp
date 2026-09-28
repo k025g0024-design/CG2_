@@ -41,7 +41,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #pragma comment(lib,"dinput8.lib")
 #pragma comment(lib,"dxguid.lib")
 
-
 //#include "DebugCamera.h"
 
 std::wstring ConvertString(const std::string& str) {
@@ -71,6 +70,7 @@ std::string ConvertString(const std::wstring& str) {
 	WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), result.data(), sizeNeeded, NULL, NULL);
 	return result;
 }
+
 
 
 ////ロンドンの現在時刻
@@ -1093,6 +1093,14 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	D3D12_BLEND_DESC blendDesc{};
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+
 	//RasterizerStateの設定
 	D3D12_RASTERIZER_DESC  rasterizerDesc{};
 
@@ -1459,7 +1467,10 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			ImGui::NewFrame();
 
 
-			ImGui::ColorEdit4("colors", &color.x);
+			ImGui::ColorEdit4("colors", &materialDataSprite->color.x);
+
+
+
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
 			ImGui::DragFloat3("translate", &transform.translate.x, 0.1f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
@@ -1472,7 +1483,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			//ImGui::SliderAngle("textureTranslate", );
 			ImGui::DragFloat2("SpriteTranslate", &transformSprite.translate.x, 1.0f);
 
+			//CG3_
 
+		ImGui::SliderFloat("Intensiyt",&color.w,0.0f,1.0f);
 
 #endif
 			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
