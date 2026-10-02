@@ -1470,6 +1470,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			ImGui::ColorEdit4("colors", &materialDataSprite->color.x);
 
+		////色々なブレンド
+		//	ImGui::Combo("Blend",&)
 
 
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
@@ -1487,6 +1489,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			//CG3_
 
 		ImGui::SliderFloat("Intensiyt",&color.w,0.0f,1.0f);
+
+
 
 #endif
 			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
