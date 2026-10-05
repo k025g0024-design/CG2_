@@ -1102,6 +1102,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
 
+
+
 	//RasterizerStateの設定
 	D3D12_RASTERIZER_DESC  rasterizerDesc{};
 
@@ -1470,8 +1472,72 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			ImGui::ColorEdit4("colors", &materialDataSprite->color.x);
 
-		////色々なブレンド
-		//	ImGui::Combo("Blend",&)
+			//色々なブレンド
+			const char* Blend[] = { "Normal" ,"AddBlend","SubtractBlend","MultiplyBlend","ScreenBlend" };
+			static int count = 0;
+
+			if (ImGui::Combo("Blend", &count, Blend, 5))
+			{
+				switch (count)
+				{
+				case 0:
+					//変更なし
+					blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+					blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+					blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+					break;
+
+				case 1:
+					/*加算合成*/
+					//srcColor * SrcAlpha + DestColor
+					blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+					blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+					blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+
+					break;
+
+				case 2:
+					/*減算合成*/
+					//DestColor - SrcColor * SrcAlpha
+					blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+					blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+					blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+
+					break;
+
+				case 3:
+					/*加算合成*/
+					//srcColor * DestColor
+					blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ZERO;
+					blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+					blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_COLOR;
+
+
+					break;
+				case 4:
+					/*加算合成*/
+					//(1 - DestColor) * srcColor + DestColor
+					blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+					blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+					blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+
+
+					break;
+
+				default:
+					break;
+				}
+
+				graphicsPipelineStateDesc.BlendState = blendDesc;
+
+				hr = device->CreateGraphicsPipelineState(
+					&graphicsPipelineStateDesc,
+					IID_PPV_ARGS(&graphicsPipelineState)
+				);
+
+				assert(SUCCEEDED(hr));
+
+			}
 
 
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
@@ -1488,7 +1554,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			//CG3_
 
-		ImGui::SliderFloat("Intensiyt",&color.w,0.0f,1.0f);
+			ImGui::SliderFloat("Intensiyt", &color.w, 0.0f, 1.0f);
 
 
 
