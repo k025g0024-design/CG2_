@@ -707,6 +707,8 @@ uint32_t latIndex;
 
 bool useMonsterBall = true;
 
+bool fence = true;
+
 
 Microsoft::WRL::ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(const Microsoft::WRL::ComPtr<ID3D12Device>& device, int32_t width, int32_t height) {
 	D3D12_RESOURCE_DESC resourceDesc{};
@@ -1174,6 +1176,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	const uint32_t kNumSphereVertices = kSubdivision * kSubdivision * 6; // 全頂点数
 
 	ModelData modeData = LoadObjFile("resources", "axis.obj");
+	ModelData fenceData = LoadObjFile("resources", "fence.obj");
+
 
 	const Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource = CreateBufferResource(device.Get(), sizeof(VertexData) * modeData.vertices.size());
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
@@ -1183,6 +1187,16 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	VertexData* vertexData = nullptr;
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	std::memcpy(vertexData, modeData.vertices.data(), sizeof(VertexData) * modeData.vertices.size());
+
+	//*フェイスデータ*//
+	const Microsoft::WRL::ComPtr<ID3D12Resource> fenceVertexResource = CreateBufferResource(device.Get(), sizeof(VertexData) * fenceData.vertices.size());
+	D3D12_VERTEX_BUFFER_VIEW fenceVertexBufferView{};
+	fenceVertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+	fenceVertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * fenceData.vertices.size());
+	fenceVertexBufferView.StrideInBytes = sizeof(VertexData);
+	VertexData* fenceVertexData = nullptr;
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&fenceVertexData));
+	std::memcpy(fenceVertexData, fenceData.vertices.data(), sizeof(VertexData)* fenceData.vertices.size());
 
 	//ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
 
@@ -1543,6 +1557,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
 			ImGui::DragFloat3("translate", &transform.translate.x, 0.1f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			//ImGui::Checkbox("fence",&fence);
+
 			ImGui::DragFloat3("direction", &directionalLightData->direction.x, 0.1f);
 
 			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
@@ -1635,7 +1651,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->DrawInstanced(UINT(modeData.vertices.size()), 1, 0, 0);
+			//commandList->DrawInstanced(UINT(modeData.vertices.size()), 1, 0, 0);
+			commandList->DrawInstanced(UINT(fenceData.vertices.size()), 1, 0, 0);
+
 			//commandList->DrawInstanced(6, 1, 0, 0);
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
