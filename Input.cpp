@@ -11,8 +11,6 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
 	HRESULT result;
 
-
-	Microsoft::WRL::ComPtr <IDirectInput8> directInput = nullptr;
 	result = DirectInput8Create
 	(
 		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr
@@ -32,9 +30,42 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 void Input::Update()
 {
+	//HRESULT result;
+
+
+	//前回のキー入力を保存
+	memcpy(keyPre, key, sizeof(key));
+
 	//キーボード情報の取得開始
 	keyboard->Acquire();
 	//全キーの入力状態の取得
-	BYTE key[256] = {};
 	keyboard->GetDeviceState(sizeof(key), key);
+}
+
+bool Input::PushKey(BYTE keyNumber)
+{
+	if (key[keyNumber])
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
+bool Input::TriggerKey(BYTE keyNumber)
+{
+
+	if (keyPre[keyNumber]!= keyPre[keyNumber])
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+
 }

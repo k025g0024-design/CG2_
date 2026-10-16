@@ -1459,18 +1459,18 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			////キーボード情報の取得開始
 			//keyboard->Acquire();
 			////全キーの入力状態の取得
-			//BYTE key[256] = {};
 			//keyboard->GetDeviceState(sizeof(key), key);
 
-			input_->Update();
 
 			////数字の0キーが押されたら
 			//if (key[DIK_0])
 			//{
 			//	OutputDebugStringA("Hit 0\n");
 			//}
+			BYTE key[256] = {};
+			input_->Update();
 
-			//debugCamera->Update(key);
+			debugCamera->Update(key);
 
 #ifdef  USE_IMGUI
 			ImGui_ImplDX12_NewFrame();
@@ -1501,8 +1501,16 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 		ImGui::SliderFloat("Intensiyt",&color.w,0.0f,1.0f);
 
 
-
 #endif
+		if (input_->PushKey(DIK_UP))
+		{
+			transform.translate.y -= 0.1f;
+		}
+		if (input_->PushKey(DIK_DOWN))
+		{
+			transform.translate.y += 0.1f;
+		}
+
 			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
 			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
