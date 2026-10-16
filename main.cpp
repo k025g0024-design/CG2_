@@ -1511,6 +1511,12 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			transform.translate.y += 0.1f;
 		}
 
+		if (input_->TriggerKey(DIK_W))
+		{
+			useMonsterBall = false;
+		}
+
+
 			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
 			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
