@@ -1,4 +1,5 @@
 #include<windows.h>
+#include"Input.h"
 #include<cstdint>
 #include<string>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 #include<format>
@@ -790,6 +791,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
 
+	Input* input_ = nullptr;
+	input_ = new Input();
 
 	HWND hwnd = CreateWindow
 	(
@@ -957,22 +960,26 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
 	hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
+	/*--------------- GE301-01 ----------------*/
+	input_->Initialize(wc.hInstance,hwnd);
 
-	//DirectInputの初期化
-	Microsoft::WRL::ComPtr < IDirectInput8> directInput = nullptr;
-	hr = DirectInput8Create(
-		wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
-	assert(SUCCEEDED(hr));
-	//キーボードデバイスの生成
-	Microsoft::WRL::ComPtr < IDirectInputDevice8> keyboard = nullptr;
-	hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, nullptr);
-	assert(SUCCEEDED(hr));
-	//入力データの形式セット
-	hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
-	assert(SUCCEEDED(hr));
-	//排他制御レベルのセット
-	hr = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	assert(SUCCEEDED(hr));
+	////DirectInputの初期化
+	//Microsoft::WRL::ComPtr < IDirectInput8> directInput = nullptr;
+	//hr = DirectInput8Create(
+	//	wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	//assert(SUCCEEDED(hr));
+	////キーボードデバイスの生成
+	//Microsoft::WRL::ComPtr < IDirectInputDevice8> keyboard = nullptr;
+	//hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, nullptr);
+	//assert(SUCCEEDED(hr));
+	////入力データの形式セット
+	//hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
+	//assert(SUCCEEDED(hr));
+	////排他制御レベルのセット
+	//hr = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	//assert(SUCCEEDED(hr));
+
+
 
 	/*--------  06-00 頂点インデックス --------*/
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexResourceSprite = CreateBufferResource(device.Get(), sizeof(uint32_t) * 6);
@@ -1449,18 +1456,21 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 		else
 		{
 
-			//キーボード情報の取得開始
-			keyboard->Acquire();
-			//全キーの入力状態の取得
-			BYTE key[256] = {};
-			keyboard->GetDeviceState(sizeof(key), key);
-			//数字の０キーが押されたら
-			if (key[DIK_0])
-			{
-				OutputDebugStringA("Hit 0\n");
-			}
+			////キーボード情報の取得開始
+			//keyboard->Acquire();
+			////全キーの入力状態の取得
+			//BYTE key[256] = {};
+			//keyboard->GetDeviceState(sizeof(key), key);
 
-			debugCamera->Update(key);
+			input_->Update();
+
+			////数字の0キーが押されたら
+			//if (key[DIK_0])
+			//{
+			//	OutputDebugStringA("Hit 0\n");
+			//}
+
+			//debugCamera->Update(key);
 
 #ifdef  USE_IMGUI
 			ImGui_ImplDX12_NewFrame();
@@ -1625,6 +1635,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	SoundUnload(&soundData1);
 
 	CloseHandle(fenceEvent);
+
+	delete input_;
 
 #ifdef  USE_IMGUI
 	ImGui_ImplDX12_Shutdown();
