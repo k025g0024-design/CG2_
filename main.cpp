@@ -1,5 +1,4 @@
 #include<windows.h>
-#include"Input.h"
 #include<cstdint>
 #include<string>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 #include<format>
@@ -37,10 +36,15 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #include <vector>
 #include "externals/DirectXTex/DirectXTex.h"
 
-#include "DebugCamera.h"
 
 #pragma comment(lib,"dinput8.lib")
 #pragma comment(lib,"dxguid.lib")
+
+//クラス
+#include "DebugCamera.h"
+#include "WinApp.h"
+#include"Input.h"
+
 
 //#include "DebugCamera.h"
 
@@ -282,29 +286,29 @@ Transform uvTransformSprite
 	{ 0.0f,0.0f,0.0f },
 };
 
-//ウィンドウプローシージャ
-LRESULT CALLBACK Windowproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-#ifdef  USE_IMGUI
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-	{
-		return true;
-	}
-#endif
-	//メッセージの種類によって処理を分ける
-	switch (msg)
-	{
-		//ウィンドウが破棄された
-	case WM_DESTROY:
-		//OSに対してアプリの終了を伝える
-		PostQuitMessage(0);
-
-		return 0;
-	}
-	//デフォルトのメッセージ処理を行う
-	return DefWindowProc(hwnd, msg, wparam, lparam);
-
-}
+////ウィンドウプローシージャ
+//LRESULT CALLBACK Windowproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+//{
+//#ifdef  USE_IMGUI
+//	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
+//	{
+//		return true;
+//	}
+//#endif
+//	//メッセージの種類によって処理を分ける
+//	switch (msg)
+//	{
+//		//ウィンドウが破棄された
+//	case WM_DESTROY:
+//		//OSに対してアプリの終了を伝える
+//		PostQuitMessage(0);
+//
+//		return 0;
+//	}
+//	//デフォルトのメッセージ処理を行う
+//	return DefWindowProc(hwnd, msg, wparam, lparam);
+//
+//}
 
 Microsoft::WRL::ComPtr<IDxcBlob>
 CompileShader
@@ -766,48 +770,54 @@ Vector3 Normalize(const Vector3& v)
 //windowsアプリでエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
-	HRESULT hr = S_FALSE;
 	D3DResourceLeakChecker leakChecker;
-	hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+
+	//HRESULT hr = S_FALSE;
+	//D3DResourceLeakChecker leakChecker;
+	//hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 
 	//出力ウィンドウへの文字出力
 	OutputDebugStringA("Hello,DirectX!\n");
 
-	WNDCLASS wc{};
+	//WNDCLASS wc{};
 
-	//ウィンドウプローシージャ
-	wc.lpfnWndProc = Windowproc;
-	//ウィンドウクラスの名前
-	wc.lpszClassName = L"CG2windowClass";
-	//インスタンスハンドル
-	wc.hInstance = GetModuleHandle(nullptr);
-	//カーソル
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	////ウィンドウプローシージャ
+	//wc.lpfnWndProc = Windowproc;
+	////ウィンドウクラスの名前
+	//wc.lpszClassName = L"CG2windowClass";
+	////インスタンスハンドル
+	//wc.hInstance = GetModuleHandle(nullptr);
+	////カーソル
+	//wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
-	RegisterClass(&wc);
+	//RegisterClass(&wc);
 
-	const int32_t kClientWidth = 1280;
-	const int32_t kClientHeight = 720;
+	//const int32_t kClientWidth = 1280;
+	//const int32_t kClientHeight = 720;
 
-	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
+	//RECT wrc = { 0,0,kClientWidth ,kClientHeight };
 
 	Input* input_ = nullptr;
 	input_ = new Input();
 
-	HWND hwnd = CreateWindow
-	(
-		wc.lpszClassName, //クラス名
-		L"CG2", //ウィンドウタイトル
-		WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		wrc.right - wrc.left, //ウィンドウ幅
-		wrc.bottom - wrc.top, //ウィンドウ高
-		nullptr, //親ウィンドウハンドル
-		nullptr, //メニューハンドル
-		wc.hInstance, //インスタンスハンドル
-		nullptr
-	);
+	WinApp* winApp = nullptr;
+	winApp = new WinApp();
+	winApp->Initialize();
+
+	//HWND hwnd = CreateWindow
+	//(
+	//	wc.lpszClassName, //クラス名
+	//	L"CG2", //ウィンドウタイトル
+	//	WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
+	//	CW_USEDEFAULT,
+	//	CW_USEDEFAULT,
+	//	wrc.right - wrc.left, //ウィンドウ幅
+	//	wrc.bottom - wrc.top, //ウィンドウ高
+	//	nullptr, //親ウィンドウハンドル
+	//	nullptr, //メニューハンドル
+	//	wc.hInstance, //インスタンスハンドル
+	//	nullptr
+	//);
 
 	D3DResourceLeakChecker leakCheck;
 
@@ -815,7 +825,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	IXAudio2MasteringVoice* masterVoice;
 
 	/*ウィンドウの×ボタンが押されるまでループ*/
-	ShowWindow(hwnd, SW_SHOW);
+	//ShowWindow(hwnd, SW_SHOW);
 
 #ifdef _DEBUG
 	Microsoft::WRL::ComPtr<ID3D12Debug1> debugController = nullptr;
@@ -956,7 +966,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	device->CreateRenderTargetView(swapChaiResources[1].Get(), &rtvDesc, rtvHandles[1]);
 
 	//XAudio2エンジンのインスタンスを生成
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
+	//AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
 	hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
@@ -1651,6 +1661,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	CloseHandle(fenceEvent);
 
 	delete input_;
+	delete winApp;
 
 #ifdef  USE_IMGUI
 	ImGui_ImplDX12_Shutdown();
