@@ -750,7 +750,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	Input* input_ = nullptr;
 	input_ = new Input();
-	input_->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
+	input_->Initialize(winApp);
 
 	winApp->Initialize();
 
@@ -1536,6 +1536,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			// 新規受付終了
 			commandList->Close();
+
+			winApp->Finalize();
 
 			//GPUにコマンドリストの実行を行わせる
 			Microsoft::WRL::ComPtr<ID3D12CommandList> commandLists[] = { commandList.Get() };

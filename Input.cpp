@@ -7,13 +7,15 @@
 
 
 
-void Input::Initialize(HINSTANCE hInstance, HWND hwnd)
+void Input::Initialize(WinApp* winApp)
 {
+	this->winApp = winApp;
+
 	HRESULT result;
 
 	result = DirectInput8Create
 	(
-		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr
+		winApp->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr
 	);
 	assert(SUCCEEDED(result));
 	//キーボードデバイスの生成
@@ -24,8 +26,9 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd)
 	result = keyboard->SetDataFormat(&c_dfDIKeyboard);
 	assert(SUCCEEDED(result));
 	//排他制御レベルのセット
-	result = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	result = keyboard->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
 	assert(SUCCEEDED(result));
+
 }
 
 void Input::Update()
