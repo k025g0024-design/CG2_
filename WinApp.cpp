@@ -34,8 +34,6 @@ void WinApp::Initialize()
 	HRESULT hr = S_FALSE;
 	hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	
-	WNDCLASS wc{};
-
 	//ウィンドウプローシージャ
 	wc.lpfnWndProc = Windowproc;
 	//ウィンドウクラスの名前
@@ -47,28 +45,26 @@ void WinApp::Initialize()
 
 	RegisterClass(&wc);
 
-	const int32_t kClientWidth = 1280;
-	const int32_t kClientHeight = 720;
 
 	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
 
 	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
 
-	HWND hwnd = CreateWindow
-	(
-		wc.lpszClassName, //クラス名
-		L"CG2", //ウィンドウタイトル
-		WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		wrc.right - wrc.left, //ウィンドウ幅
-		wrc.bottom - wrc.top, //ウィンドウ高
-		nullptr, //親ウィンドウハンドル
-		nullptr, //メニューハンドル
-		wc.hInstance, //インスタンスハンドル
-		nullptr
-	);
+	// hwnd = CreateWindow
+	//(
+	//	wc.lpszClassName, //クラス名
+	//	L"CG2", //ウィンドウタイトル
+	//	WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
+	//	CW_USEDEFAULT,
+	//	CW_USEDEFAULT,
+	//	wrc.right - wrc.left, //ウィンドウ幅
+	//	wrc.bottom - wrc.top, //ウィンドウ高
+	//	nullptr, //親ウィンドウハンドル
+	//	nullptr, //メニューハンドル
+	//	wc.hInstance, //インスタンスハンドル
+	//	nullptr
+	//);
 
 
 	/*ウィンドウの×ボタンが押されるまでループ*/

@@ -1,4 +1,3 @@
-#include<windows.h>
 #include<cstdint>
 #include<string>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 #include<format>
@@ -76,15 +75,6 @@ std::string ConvertString(const std::wstring& str) {
 	return result;
 }
 
-
-
-////ロンドンの現在時刻
-//std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-//std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
-//nowSeconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
-//std::chrono::zoned_time localTime{ std::chrono::current_zone(),nowSeconds };
-//std::string dateString=std::format
-//
 void Log(const std::string& message)
 {
 	OutputDebugStringA(message.c_str());
@@ -286,29 +276,6 @@ Transform uvTransformSprite
 	{ 0.0f,0.0f,0.0f },
 };
 
-////ウィンドウプローシージャ
-//LRESULT CALLBACK Windowproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-//{
-//#ifdef  USE_IMGUI
-//	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-//	{
-//		return true;
-//	}
-//#endif
-//	//メッセージの種類によって処理を分ける
-//	switch (msg)
-//	{
-//		//ウィンドウが破棄された
-//	case WM_DESTROY:
-//		//OSに対してアプリの終了を伝える
-//		PostQuitMessage(0);
-//
-//		return 0;
-//	}
-//	//デフォルトのメッセージ処理を行う
-//	return DefWindowProc(hwnd, msg, wparam, lparam);
-//
-//}
 
 Microsoft::WRL::ComPtr<IDxcBlob>
 CompileShader
@@ -772,52 +739,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 {
 	D3DResourceLeakChecker leakChecker;
 
-	//HRESULT hr = S_FALSE;
-	//D3DResourceLeakChecker leakChecker;
-	//hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+	HRESULT hr = S_FALSE;
+	hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 
 	//出力ウィンドウへの文字出力
 	OutputDebugStringA("Hello,DirectX!\n");
 
-	//WNDCLASS wc{};
-
-	////ウィンドウプローシージャ
-	//wc.lpfnWndProc = Windowproc;
-	////ウィンドウクラスの名前
-	//wc.lpszClassName = L"CG2windowClass";
-	////インスタンスハンドル
-	//wc.hInstance = GetModuleHandle(nullptr);
-	////カーソル
-	//wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-	//RegisterClass(&wc);
-
-	//const int32_t kClientWidth = 1280;
-	//const int32_t kClientHeight = 720;
-
-	//RECT wrc = { 0,0,kClientWidth ,kClientHeight };
+	WinApp* winApp = nullptr;
+	winApp = new WinApp();
 
 	Input* input_ = nullptr;
 	input_ = new Input();
+	input_->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
 
-	WinApp* winApp = nullptr;
-	winApp = new WinApp();
 	winApp->Initialize();
 
-	//HWND hwnd = CreateWindow
-	//(
-	//	wc.lpszClassName, //クラス名
-	//	L"CG2", //ウィンドウタイトル
-	//	WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
-	//	CW_USEDEFAULT,
-	//	CW_USEDEFAULT,
-	//	wrc.right - wrc.left, //ウィンドウ幅
-	//	wrc.bottom - wrc.top, //ウィンドウ高
-	//	nullptr, //親ウィンドウハンドル
-	//	nullptr, //メニューハンドル
-	//	wc.hInstance, //インスタンスハンドル
-	//	nullptr
-	//);
 
 	D3DResourceLeakChecker leakCheck;
 
@@ -928,15 +864,15 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	//スワップチェーンを生成する
 	Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	swapChainDesc.Width = kClientWidth;
-	swapChainDesc.Height = kClientHeight;
+	swapChainDesc.Width = WinApp:: kClientWidth;
+	swapChainDesc.Height = WinApp::kClientHeight;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 2;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	//コマンドキュー、ウィンドウハンドル、設定を渡して生成する
-	hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
+	hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), winApp->GetHwnd(), &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
 	assert(SUCCEEDED(hr));
 
 	//ディスクリプタヒープの生成
@@ -971,24 +907,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
 	/*--------------- GE301-01 ----------------*/
-	input_->Initialize(wc.hInstance,hwnd);
-
-	////DirectInputの初期化
-	//Microsoft::WRL::ComPtr < IDirectInput8> directInput = nullptr;
-	//hr = DirectInput8Create(
-	//	wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
-	//assert(SUCCEEDED(hr));
-	////キーボードデバイスの生成
-	//Microsoft::WRL::ComPtr < IDirectInputDevice8> keyboard = nullptr;
-	//hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, nullptr);
-	//assert(SUCCEEDED(hr));
-	////入力データの形式セット
-	//hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
-	//assert(SUCCEEDED(hr));
-	////排他制御レベルのセット
-	//hr = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	//assert(SUCCEEDED(hr));
-
+	input_->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
 
 
 	/*--------  06-00 頂点インデックス --------*/
@@ -1131,7 +1050,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	Microsoft::WRL::ComPtr <IDxcBlob> pixelShaderBlob = CompileShader(L"Object3d.PS.hlsl", L"ps_6_0", dxcUtils.Get(), dxcCompiler.Get(), includeHandler.Get());
 	assert(pixelShaderBlob != nullptr);
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device.Get(), kClientWidth, kClientHeight);
+	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device.Get(), WinApp::kClientWidth, WinApp::kClientHeight);
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = CreatDescriptoHeap(device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 	//DSVの設定
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
@@ -1303,8 +1222,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 	//ビューポート
 	D3D12_VIEWPORT viewport{};
-	viewport.Width = kClientWidth;
-	viewport.Height = kClientHeight;
+	viewport.Width = WinApp::kClientWidth;
+	viewport.Height = WinApp::kClientHeight;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 	viewport.MinDepth = 0.0f;
@@ -1314,9 +1233,9 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	D3D12_RECT scissorRect{};
 
 	scissorRect.left = 0;
-	scissorRect.right = kClientWidth;
+	scissorRect.right = WinApp::kClientWidth;
 	scissorRect.top = 0;
-	scissorRect.bottom = kClientHeight;
+	scissorRect.bottom = WinApp::kClientHeight;
 
 	DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
@@ -1466,17 +1385,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 		else
 		{
 
-			////キーボード情報の取得開始
-			//keyboard->Acquire();
-			////全キーの入力状態の取得
-			//keyboard->GetDeviceState(sizeof(key), key);
-
-
-			////数字の0キーが押されたら
-			//if (key[DIK_0])
-			//{
-			//	OutputDebugStringA("Hit 0\n");
-			//}
 			BYTE key[256] = {};
 			input_->Update();
 
@@ -1538,7 +1446,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			//WVPMatrix
 			Matrix4x4 worldMatrixSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 			Matrix4x4 viewMatrixSprite = MakeIndentity4x4();
-			Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
+			Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(WinApp::kClientWidth), float(WinApp::kClientHeight), 0.0f, 100.0f);
 			transformtionMatrixDataSprite->World = worldMatrixSprite;
 			transformtionMatrixDataSprite->WVP = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 
@@ -1548,7 +1456,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			viewMatrix = debugCamera->viewMatrix;
 
-			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(WinApp::kClientWidth) / float(WinApp::kClientHeight), 0.1f, 100.0f);
 			wvpData->World = worldMatrix;
 
 			Matrix4x4 worldViewProjectionmatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
@@ -1669,6 +1577,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	ImGui::DestroyContext();
 #endif
 	CoUninitialize();
-	CloseWindow(hwnd);
+	CloseWindow(winApp->GetHwnd());
 	return 0;
 }
