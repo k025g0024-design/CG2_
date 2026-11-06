@@ -51,20 +51,20 @@ void WinApp::Initialize()
 	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
 
-	// hwnd = CreateWindow
-	//(
-	//	wc.lpszClassName, //クラス名
-	//	L"CG2", //ウィンドウタイトル
-	//	WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
-	//	CW_USEDEFAULT,
-	//	CW_USEDEFAULT,
-	//	wrc.right - wrc.left, //ウィンドウ幅
-	//	wrc.bottom - wrc.top, //ウィンドウ高
-	//	nullptr, //親ウィンドウハンドル
-	//	nullptr, //メニューハンドル
-	//	wc.hInstance, //インスタンスハンドル
-	//	nullptr
-	//);
+	 hwnd = CreateWindow
+	(
+		wc.lpszClassName, //クラス名
+		L"CG2", //ウィンドウタイトル
+		WS_OVERLAPPEDWINDOW, //ウィンドウスタイル
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		wrc.right - wrc.left, //ウィンドウ幅
+		wrc.bottom - wrc.top, //ウィンドウ高
+		nullptr, //親ウィンドウハンドル
+		nullptr, //メニューハンドル
+		wc.hInstance, //インスタンスハンドル
+		nullptr
+	);
 
 
 	/*ウィンドウの×ボタンが押されるまでループ*/

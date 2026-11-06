@@ -17,14 +17,14 @@ public:
 
 private:
 
+WinApp* winApp_ = nullptr;
+
 	BYTE key[256] = {};
 	BYTE keyPre[256] = {};
 
 	//キーボードデバイスの生成をヘッダーに移動
 ComPtr< IDirectInputDevice8 > keyboard ;
 Microsoft::WRL::ComPtr <IDirectInput8> directInput = nullptr;
-
-WinApp* winApp_ = nullptr;
 
 };
 

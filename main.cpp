@@ -907,7 +907,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
 	/*--------------- GE301-01 ----------------*/
-	input_->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
+	//input_->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
 
 
 	/*--------  06-00 頂点インデックス --------*/
@@ -1536,9 +1536,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			// 新規受付終了
 			commandList->Close();
-
-			winApp->Finalize();
-
 			//GPUにコマンドリストの実行を行わせる
 			Microsoft::WRL::ComPtr<ID3D12CommandList> commandLists[] = { commandList.Get() };
 			commandQueue->ExecuteCommandLists(1, commandLists->GetAddressOf());
@@ -1561,6 +1558,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			assert(SUCCEEDED(hr));
 			hr = commandList->Reset(commandAllocator.Get(), nullptr);
 			assert(SUCCEEDED(hr));
+			winApp->Finalize();
 
 		}
 	}
