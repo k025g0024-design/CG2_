@@ -863,7 +863,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	//スワップチェーンを生成する
 	Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	swapChainDesc.Width = WinApp:: kClientWidth;
+	swapChainDesc.Width = WinApp::kClientWidth;
 	swapChainDesc.Height = WinApp::kClientHeight;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
@@ -1401,8 +1401,8 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			ImGui::ColorEdit4("colors", &materialDataSprite->color.x);
 
-		////色々なブレンド
-		//	ImGui::Combo("Blend",&)
+			////色々なブレンド
+			//	ImGui::Combo("Blend",&)
 
 
 			ImGui::DragFloat3("rotate", &transform.rotate.x, 0.1f);
@@ -1419,23 +1419,23 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 			//CG3_
 
-		ImGui::SliderFloat("Intensiyt",&color.w,0.0f,1.0f);
+			ImGui::SliderFloat("Intensiyt", &color.w, 0.0f, 1.0f);
 
 
 #endif
-		if (input_->PushKey(DIK_UP))
-		{
-			transform.translate.y -= 0.1f;
-		}
-		if (input_->PushKey(DIK_DOWN))
-		{
-			transform.translate.y += 0.1f;
-		}
+			if (input_->PushKey(DIK_UP))
+			{
+				transform.translate.y -= 0.1f;
+			}
+			if (input_->PushKey(DIK_DOWN))
+			{
+				transform.translate.y += 0.1f;
+			}
 
-		if (input_->TriggerKey(DIK_W))
-		{
-			useMonsterBall = false;
-		}
+			if (input_->TriggerKey(DIK_W))
+			{
+				useMonsterBall = false;
+			}
 
 
 			//パラメータからUVTransform用の行列を生成する(SRTの順に処理)
