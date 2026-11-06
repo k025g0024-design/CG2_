@@ -1,4 +1,5 @@
 #include "Input.h"
+
 #include<windows.h>
 #include<cassert>
 
