@@ -1558,7 +1558,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 			assert(SUCCEEDED(hr));
 			hr = commandList->Reset(commandAllocator.Get(), nullptr);
 			assert(SUCCEEDED(hr));
-			winApp->Finalize();
 
 		}
 	}
@@ -1567,9 +1566,11 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	SoundUnload(&soundData1);
 
 	CloseHandle(fenceEvent);
+	winApp->Finalize();
 
 	delete input_;
 	delete winApp;
+	winApp = nullptr;
 
 #ifdef  USE_IMGUI
 	ImGui_ImplDX12_Shutdown();
