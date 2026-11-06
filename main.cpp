@@ -537,7 +537,6 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 		std::string identifier;
 		std::istringstream s(line);
 		s >> identifier;
-
 		if (identifier == "v")
 		{
 			Vector4 position;
@@ -1375,12 +1374,16 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	MSG msg{};
 	while (msg.message != WM_QUIT)
 	{
-		//Windowにメッセージが来たら優先で処理する
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+		////Windowにメッセージが来たら優先で処理する
+		//if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		//{
+		//	TranslateMessage(&msg);
+		//	DispatchMessage(&msg);
 
+		//}
+		if (winApp->ProcessMessage())
+		{
+			break;
 		}
 		else
 		{

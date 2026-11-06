@@ -15,6 +15,9 @@ public:
 
 	void Finalize();
 
+	bool ProcessMessage();
+
+
 	static const int32_t kClientWidth = 1280;
 	static const int32_t kClientHeight = 720;
 	//getter
@@ -23,10 +26,9 @@ public:
 private:
 
 	HWND hwnd = nullptr;
-
-
-
 	WNDCLASS wc{};
+
+
 
 
 };
