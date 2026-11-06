@@ -1284,7 +1284,7 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(hwnd);
+	ImGui_ImplWin32_Init(winApp->GetHwnd);
 	ImGui_ImplDX12_Init(device.Get(), swapChainDesc.BufferCount, rtvDesc.Format, srvDescriptorHeap.Get(), srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Build();
@@ -1561,12 +1561,12 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 
 		}
 	}
+	winApp->Finalize();
 
 	xAudio2.Reset();
 	SoundUnload(&soundData1);
 
 	CloseHandle(fenceEvent);
-	winApp->Finalize();
 
 	delete input_;
 	delete winApp;
@@ -1578,6 +1578,6 @@ D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0
 	ImGui::DestroyContext();
 #endif
 	CoUninitialize();
-	CloseWindow(winApp->GetHwnd());
+	//CloseWindow(winApp->GetHwnd());
 	return 0;
 }
